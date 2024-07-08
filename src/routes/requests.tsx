@@ -1,6 +1,8 @@
+import { Suspense, useState } from "react";
 import { Await, Link, useLoaderData } from "react-router-dom";
 import { acceptFriendRequest, ignoreFriendRequest } from "../db/profiles";
-import { Suspense, useState } from "react";
+import Spinner from "../components/spinner";
+import { addFriend } from "../auth/state";
 
 type FriendRequest = {
   id: string;
@@ -16,6 +18,7 @@ function Person({ id, name }: { id: string; name: string }) {
     setLoading(true);
     acceptFriendRequest(id)
       .then(() => {
+        addFriend({ id, name });
         setStatus("connected");
         setLoading(false);
       })
@@ -32,40 +35,46 @@ function Person({ id, name }: { id: string; name: string }) {
   };
   if (status === "connected") {
     return (
-      <Link to={`/p/${id}`}>
-        <div>
-          <p>{name}</p>
-          <p>{id}</p>
+      <Link to={`/p/${id}`} className="flex">
+        <div className="flex-fill">
+          <p className="name">{name}</p>
+          <p className="username">{id}</p>
         </div>
-        <div>
-          <p>Connected</p>
+        <div className="flex-center">
+          <p className="faded">
+            <span className="blue">&#10003;</span> Connected
+          </p>
         </div>
       </Link>
     );
   }
   return (
-    <>
-      <div>
-        <p>{name}</p>
-        <p>{id}</p>
+    <div className="flex">
+      <div className="flex-fill">
+        <p className="name">{name}</p>
+        <p className="username">{id}</p>
       </div>
-      <div>
+      <div className="btns">
         {loading ? (
-          <div className="spinner" />
+          <Spinner size={1.25} />
         ) : (
           <>
             {status === "ignored" ? (
-              <p>Ignored</p>
+              <p className="faded">Ignored</p>
             ) : (
               <>
-                <button onClick={connect}>Accept</button>
-                <button onClick={ignore}>Ignore</button>
+                <button onClick={connect} className="btn primary">
+                  Accept
+                </button>
+                <button onClick={ignore} className="btn">
+                  Ignore
+                </button>
               </>
             )}
           </>
         )}
       </div>
-    </>
+    </div>
   );
 }
 
@@ -79,23 +88,24 @@ export default function Requests() {
         <h1>Friend Requests</h1>
       </header>
       <section>
-        <Suspense fallback={<div className="spinner" />}>
+        <Suspense fallback={<Spinner />}>
           <Await resolve={data.requests}>
-            {(requests: FriendRequest[]) => (
-              <>
-                {requests.length > 0 ? (
-                  <ul>
-                    {requests.map(({ id, name }) => (
-                      <li key={id}>
-                        <Person id={id} name={name} />
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p>No friend requests</p>
-                )}
-              </>
-            )}
+            {(requests: FriendRequest[]) =>
+              requests.length > 0 ? (
+                <ul className="people">
+                  {requests.map(({ id, name }) => (
+                    <li key={id} className="person">
+                      <Person id={id} name={name} />
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="center">
+                  Looks like you don&apos;t have any friend requests at the
+                  moment.
+                </p>
+              )
+            }
           </Await>
         </Suspense>
       </section>

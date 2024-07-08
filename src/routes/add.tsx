@@ -1,8 +1,10 @@
+import { Suspense, useState } from "react";
+import { Await, useLoaderData } from "react-router-dom";
 import { Edit } from "lucide-react";
-import { useState } from "react";
-import { useLoaderData } from "react-router-dom";
-import "./add.css";
 import { createMoment, deleteMoment, updateMoment } from "../db/moments";
+import { thisMonthName } from "../date-utils";
+import MomentText from "../components/momenttext";
+import Spinner from "../components/spinner";
 
 type Moment = {
   id: string;
@@ -22,6 +24,10 @@ function MomentItem({ moment }: { moment: Moment }) {
         setIsEditing(false);
       })
       .catch(console.warn);
+  };
+  const onCancel = () => {
+    setMomentText(moment.text);
+    setIsEditing(false);
   };
   const onDelete = () => {
     setIsBusy(true);
@@ -47,51 +53,60 @@ function MomentItem({ moment }: { moment: Moment }) {
               placeholder="Share a moment from this month"
               minLength={2}
               maxLength={528}
-              rows={8}
+              rows={4}
               autoFocus
               required
               value={momentText}
               onChange={({ target }) => setMomentText(target.value)}
+              readOnly={isBusy}
             ></textarea>
-            <button
-              type="button"
-              onClick={({ currentTarget }) => {
-                currentTarget.form?.reset();
-                setIsEditing(false);
-              }}
-            >
-              Cancel
-            </button>
-            {momentText.trim().length > 0 ? (
-              <button
-                type="submit"
-                disabled={
-                  momentText.trim().length < 3 ||
-                  momentText.length > 528 ||
-                  isBusy
-                }
-              >
-                Save
-              </button>
-            ) : (
-              <button type="button" onClick={onDelete}>
-                Delete
-              </button>
-            )}
-            {isBusy && <div className="spinner" />}
+            <div className="btns">
+              {isBusy ? (
+                <Spinner size={2} />
+              ) : (
+                <>
+                  <button type="button" className="btn" onClick={onCancel}>
+                    Cancel
+                  </button>
+                  {momentText.trim().length > 0 ? (
+                    <button
+                      type="submit"
+                      className="btn primary"
+                      disabled={
+                        momentText.trim().length < 3 ||
+                        momentText.length > 528 ||
+                        isBusy
+                      }
+                    >
+                      Save
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      className="btn delete"
+                      onClick={onDelete}
+                    >
+                      Delete
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
           </fieldset>
         </form>
       ) : (
-        <div className="moment">
-          <p>{momentText}</p>
+        <>
+          <div className="moment">
+            <MomentText text={momentText} />
+          </div>
           <button
             type="button"
-            className="toggle-edit"
+            className="toggle-edit flex-center"
             onClick={() => setIsEditing(true)}
           >
             <Edit size={16} />
           </button>
-        </div>
+        </>
       )}
     </div>
   );
@@ -99,19 +114,17 @@ function MomentItem({ moment }: { moment: Moment }) {
 
 export default function Add() {
   const data = useLoaderData() as { moments: Moment[] };
-  const [moments, setMoments] = useState(data.moments);
+  const [newMoments, setNewMoments] = useState<Moment[]>([]);
   const [momentText, setMomentText] = useState("");
   const [isAdding, setIsAdding] = useState(false);
-  const currentMonth = "2024-07";
-  const thisMonthFormatted = "July 2024";
   const saveNewMoment = () => {
     setIsAdding(true);
     const text = momentText.trim();
-    createMoment(currentMonth, text)
+    createMoment(text)
       .then((id) => {
         setMomentText("");
         setIsAdding(false);
-        setMoments((prev) => [...prev, { id, text }]);
+        setNewMoments((prev) => [...prev, { id, text }]);
       })
       .catch(console.warn);
   };
@@ -119,7 +132,7 @@ export default function Add() {
     <main>
       <header>
         <h1>Your moments this month</h1>
-        <h2>{thisMonthFormatted}</h2>
+        <h2>{thisMonthName}</h2>
       </header>
       <form
         onSubmit={(e) => {
@@ -127,6 +140,7 @@ export default function Add() {
           saveNewMoment();
           return false;
         }}
+        className="mb3"
       >
         <fieldset disabled={isAdding}>
           <textarea
@@ -134,22 +148,38 @@ export default function Add() {
             placeholder="Share a moment from this month"
             minLength={2}
             maxLength={528}
-            rows={8}
+            rows={4}
             autoFocus
             required
             value={momentText}
             onChange={({ target }) => setMomentText(target.value)}
             readOnly={isAdding}
           ></textarea>
-          <button type="submit" disabled={isAdding}>
-            {isAdding ? "Adding..." : "Add"}
-          </button>
-          {isAdding && <div className="spinner" />}
+          <div className="flex-center">
+            {isAdding ? (
+              <Spinner size={2.25} mv />
+            ) : (
+              <button type="submit" className="btn primary big-btn">
+                Add
+              </button>
+            )}
+          </div>
         </fieldset>
       </form>
       <section>
-        <ul className="moments-list">
-          {moments.map((m) => (
+        <ul className="moments">
+          <Suspense fallback={<Spinner />}>
+            <Await resolve={data.moments}>
+              {(moments: Moment[]) =>
+                moments.map((m) => (
+                  <li key={m.id}>
+                    <MomentItem moment={m} />
+                  </li>
+                ))
+              }
+            </Await>
+          </Suspense>
+          {newMoments.map((m) => (
             <li key={m.id}>
               <MomentItem moment={m} />
             </li>

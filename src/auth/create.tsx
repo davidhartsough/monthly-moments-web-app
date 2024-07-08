@@ -1,4 +1,5 @@
 import { useState } from "react";
+import Spinner from "../components/spinner";
 import { State } from "./state";
 import { Profile, createNewProfile, isUsernameTaken } from "../db/profiles";
 
@@ -14,11 +15,11 @@ type Props = {
 
 function getSuggestion({ email, displayName }: AuthData) {
   return displayName.length > 0
-    ? displayName.toLowerCase().replace(/ /g, "")
+    ? displayName.toLowerCase().replace(/[^\p{L}]/gu, "")
     : email.split("@")[0];
 }
 
-const usernamePattern = /^[a-z0-9-]+$/;
+const usernamePattern = /^[a-z0-9]+$/;
 function isValidUsername(id: string) {
   return id.length > 1 && usernamePattern.test(id) && id.length <= 96;
 }
@@ -90,10 +91,13 @@ export default function Create({ authData, proceed }: Props) {
       })
       .catch(console.warn);
   };
+  const nameIsValid = isValidName(name);
+  const usernameIsValid = isValidUsername(username);
   return (
     <main>
       <header>
-        <h1>Create your profile</h1>
+        <h1>Monthly Moments</h1>
+        <h2>Create your profile</h2>
       </header>
       <section>
         <form
@@ -104,7 +108,12 @@ export default function Create({ authData, proceed }: Props) {
           }}
         >
           <fieldset disabled={loading}>
-            <label htmlFor="name">Name</label>
+            <label htmlFor="name" className="flex">
+              <span className="flex-fill">Name</span>
+              <span className={`helper${nameIsValid ? " valid" : ""}`}>
+                {`${name.length}/96`}
+              </span>
+            </label>
             <input
               type="text"
               name="name"
@@ -123,8 +132,11 @@ export default function Create({ authData, proceed }: Props) {
             <div className="separator">
               <div className="line"></div>
             </div>
-            <label htmlFor="username">
-              <p>Username</p>
+            <label htmlFor="username" className="flex">
+              <span className="flex-fill">Username</span>
+              <span className={`helper${usernameIsValid ? " valid" : ""}`}>
+                {`${username.length}/96`}
+              </span>
             </label>
             <input
               type="text"
@@ -137,21 +149,35 @@ export default function Create({ authData, proceed }: Props) {
               minLength={2}
               required
               title="Enter a valid username"
-              pattern="^[a-z\-0-9]+$"
+              pattern="^[a-z0-9]+$"
               value={username}
               onChange={({ target }) => setUsername(target.value)}
             />
-            <p className="notice">
-              <strong>NOTE:</strong> Once you pick a username, you cannot change
-              it.
-            </p>
-            {!!taken && (
-              <p id="try-again">{`Sorry, the username "${taken}" is taken.`}</p>
+            {username.length > 1 && !usernameIsValid && (
+              <p className="helper error">
+                Please only use lowercase letters and numbers.
+              </p>
             )}
-            {loading && <div className="spinner" />}
-            <button type="submit" className="btn" disabled={loading}>
-              Create
-            </button>
+            {!!taken && (
+              <p className="helper error">{`Sorry, the username "${taken}" is taken.`}</p>
+            )}
+            <p className="helper">
+              <strong>NOTE:</strong> Once you choose a username, you cannot
+              change it.
+            </p>
+            <div className="center">
+              {loading ? (
+                <Spinner size={1.25} />
+              ) : (
+                <button
+                  type="submit"
+                  className="btn"
+                  disabled={!nameIsValid || !usernameIsValid}
+                >
+                  Create
+                </button>
+              )}
+            </div>
           </fieldset>
         </form>
       </section>

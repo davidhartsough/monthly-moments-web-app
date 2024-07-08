@@ -11,28 +11,39 @@ import {
   where,
 } from "firebase/firestore";
 import { db } from "./fire";
-import { getState } from "../auth/state";
+import {
+  addMoment,
+  editMoment,
+  getState,
+  getThisMonthsMoments,
+  removeMoment,
+  setThisMonthsMoments,
+} from "../auth/state";
+import { thisMonth } from "../date-utils";
 
 const momentsCollection = collection(db, "moments");
 
-export async function createMoment(month: string, text: string) {
+export async function createMoment(text: string) {
   const { uid, username } = getState()!;
   const { id } = await addDoc(momentsCollection, {
     uid,
     username,
-    month,
+    month: thisMonth,
     text,
     timestamp: serverTimestamp(),
   });
+  addMoment({ id, text });
   return id;
 }
 
 export async function updateMoment(id: string, text: string) {
   await updateDoc(doc(db, "moments", id), { text });
+  editMoment(id, text);
 }
 
 export async function deleteMoment(id: string) {
   await deleteDoc(doc(db, "moments", id));
+  removeMoment(id);
 }
 
 type BasicMoment = {
@@ -41,8 +52,10 @@ type BasicMoment = {
 };
 
 export async function getMyMomentsThisMonth(): Promise<BasicMoment[]> {
+  const myMoments = getThisMonthsMoments();
+  if (myMoments) return myMoments;
   const { uid, username } = getState()!;
-  const month = "2024-05";
+  const month = thisMonth;
   const q = query(
     momentsCollection,
     where("uid", "==", uid),
@@ -62,6 +75,7 @@ export async function getMyMomentsThisMonth(): Promise<BasicMoment[]> {
         : null
     )
     .filter((d): d is BasicMoment => !!d);
+  setThisMonthsMoments(moments);
   return moments;
 }
 

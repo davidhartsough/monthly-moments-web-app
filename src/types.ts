@@ -1,5 +1,6 @@
+// TODO: put 'em all here?
+
 export interface Profile {
-  id: string;
   uid: string;
   username: string;
   name: string;

@@ -1,10 +1,11 @@
 import { ReactNode, useEffect, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "../db/fire";
-import { getUserData } from "../db/profiles";
-import { State, clearState, setState } from "./state";
 import Login from "./login";
 import Create from "./create";
+import SplashSpinner from "../components/splashspinner";
+import { auth } from "../db/fire";
+import { getUserData } from "../db/profiles";
+import { State, clearState, getState, setState } from "./state";
 
 type AuthData = {
   uid: string;
@@ -23,7 +24,11 @@ export default function Authenticator({ children }: { children: ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         const { uid, displayName, email } = user;
-        setStep(1);
+        const state = getState();
+        if (state) {
+          setStep(4);
+          return;
+        }
         getUserData(user.uid)
           .then((userData) => {
             if (userData) {
@@ -41,6 +46,7 @@ export default function Authenticator({ children }: { children: ReactNode }) {
                 },
               });
               setStep(4);
+              return;
             } else {
               setAuthData({
                 uid,
@@ -48,12 +54,14 @@ export default function Authenticator({ children }: { children: ReactNode }) {
                 displayName: displayName || "",
               });
               setStep(3);
+              return;
             }
           })
           .catch(console.warn);
       } else {
         clearState();
         setStep(2);
+        return;
       }
     });
     return () => unsubscribe();
@@ -66,10 +74,6 @@ export default function Authenticator({ children }: { children: ReactNode }) {
     case 4:
       return children;
     default:
-      return (
-        <main>
-          <div className="spinner" />
-        </main>
-      );
+      return <SplashSpinner />;
   }
 }

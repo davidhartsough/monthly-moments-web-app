@@ -1,5 +1,8 @@
 import { Suspense } from "react";
 import { Await, useLoaderData, useParams } from "react-router-dom";
+import Spinner from "../components/spinner";
+import MomentText from "../components/momenttext";
+import MonthPicker from "../components/monthpicker";
 
 type Moment = {
   id: string;
@@ -8,28 +11,25 @@ type Moment = {
 
 export default function Month() {
   const data = useLoaderData() as { moments: Moment[] };
-  const { month } = useParams();
+  const { id, month } = useParams();
   return (
     <section>
-      <Suspense fallback={<div className="spinner" />}>
+      <MonthPicker id={id!} month={month!} />
+      <Suspense fallback={<Spinner />}>
         <Await resolve={data.moments}>
-          {(moments: Moment[]) => (
-            <>
-              <div>
-                <p>[month picker]</p>
-                <p>{month}</p>
-              </div>
-              {moments.length > 0 ? (
-                <ul>
-                  {moments.map(({ id, text }) => (
-                    <li key={id}>{text}</li>
-                  ))}
-                </ul>
-              ) : (
-                <p>No moments for this month</p>
-              )}
-            </>
-          )}
+          {(moments: Moment[]) =>
+            moments.length > 0 ? (
+              <ul className="moments">
+                {moments.map(({ id, text }) => (
+                  <li key={id} className="moment">
+                    <MomentText text={text} />
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="center">No moments for this month</p>
+            )
+          }
         </Await>
       </Suspense>
     </section>

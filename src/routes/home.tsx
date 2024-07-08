@@ -1,5 +1,8 @@
-import { useState } from "react";
-import { Link, useLoaderData } from "react-router-dom";
+import { Suspense, useState } from "react";
+import { Await, Link, useLoaderData } from "react-router-dom";
+import { Search } from "lucide-react";
+import { lastMonthName } from "../date-utils";
+import Spinner from "../components/spinner";
 
 type Friend = {
   id: string;
@@ -8,12 +11,12 @@ type Friend = {
 
 function List({ friends }: { friends: Friend[] }) {
   return (
-    <ul>
+    <ul className="people">
       {friends.map(({ id, name }) => (
         <li key={id}>
-          <Link to={`/p/${id}`}>
-            <p>{name}</p>
-            <p>{id}</p>
+          <Link to={`/p/${id}`} className="person">
+            <p className="name">{name}</p>
+            <p className="username">{id}</p>
           </Link>
         </li>
       ))}
@@ -31,47 +34,55 @@ function Filter({ friends }: { friends: Friend[] }) {
         )
       : friends;
   return (
-    <section>
-      <input
-        placeholder="Search"
-        type="search"
-        name="search"
-        id="search"
-        value={query}
-        onChange={({ target }) => setQuery(target.value)}
-      />
+    <>
+      <label htmlFor="search" className="search-box">
+        <Search size={20} className="search-icon" />
+        <input
+          placeholder="Search"
+          type="search"
+          name="search"
+          id="search"
+          value={query}
+          onChange={({ target }) => setQuery(target.value)}
+        />
+      </label>
       {filtered.length > 0 ? (
         <List friends={filtered} />
       ) : (
-        <p className="empty">{`No friends match your search for "${query}"`}</p>
+        <p className="center">{`No friends match your search for "${query}"`}</p>
       )}
-    </section>
+    </>
   );
 }
 
 export default function Home() {
-  const { friends } = useLoaderData() as { friends: Friend[] };
+  const data = useLoaderData() as { friends: Friend[] };
   return (
     <main>
       <header>
-        <h1>[Month] Recaps</h1>
+        <h1>Monthly Moments</h1>
+        <h2>{lastMonthName} Recaps</h2>
       </header>
-      {friends.length > 10 ? (
-        <Filter friends={friends} />
-      ) : (
-        <section>
-          {friends.length > 0 ? (
-            <List friends={friends} />
-          ) : (
-            <p className="empty">
-              Looks like you haven&apos;t added any friends yet.
-            </p>
-          )}
-        </section>
-      )}
-      <footer>
-        <Link to="/search">Add More Friends</Link>
-      </footer>
+      <section>
+        <Suspense fallback={<Spinner />}>
+          <Await resolve={data.friends}>
+            {(friends: Friend[]) => (
+              <>
+                {friends.length > 10 ? (
+                  <Filter friends={friends} />
+                ) : (
+                  <List friends={friends} />
+                )}
+                <footer className="center flex-center">
+                  <Link to="/search" className="btn">
+                    Add More Friends
+                  </Link>
+                </footer>
+              </>
+            )}
+          </Await>
+        </Suspense>
+      </section>
     </main>
   );
 }

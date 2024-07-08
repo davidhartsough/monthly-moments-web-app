@@ -1,4 +1,9 @@
-import { createBrowserRouter, defer, redirect } from "react-router-dom";
+import {
+  createBrowserRouter,
+  defer,
+  redirect,
+  RouterProvider,
+} from "react-router-dom";
 import Root from "./root";
 import Home from "./home";
 import Add from "./add";
@@ -6,100 +11,91 @@ import Me from "./me";
 import Search from "./search";
 import Requests from "./requests";
 import Profile from "./profile";
+import Person from "./person";
 import Month from "./month";
 import EditName from "./editname";
-import Login from "./login";
-import { logout, signInWithGoogle, getCurrentUser } from "../db/auth";
+import { logout } from "../db/auth";
 import {
   getFriendRequests,
   getMyFriends,
   getPeople,
   getProfile,
+  updateName,
 } from "../db/profiles";
 import { getMomentsForMonth, getMyMomentsThisMonth } from "../db/moments";
 import { getState } from "../auth/state";
+import { isValidMonth, lastMonth } from "../date-utils";
+import ErrorMsg from "../components/errormsg";
+
+const baseTitle = "Monthly Moments";
+const setDocTitle = (title: string) => {
+  document.title = `${title} | ${baseTitle}`;
+};
+const resetDocTitle = () => {
+  document.title = baseTitle;
+};
 
 const router = createBrowserRouter([
   {
-    path: "/login",
-    loader: () => {
-      const user = getCurrentUser();
-      if (user) return redirect("/");
-      return true;
-    },
-    action: async () => {
-      await signInWithGoogle();
-      return redirect("/");
-    },
-    element: <Login />,
-  },
-  {
-    path: "/create",
-    loader: () => {
-      const state = getState();
-      if (state && state.username.length > 0 && state.name.length > 0) {
-        return redirect("/");
-      }
-      return true;
-    },
-    // action: () => {},
-    // element:
-  },
-  {
     path: "/",
     element: <Root />,
-    errorElement: (
-      <main>
-        <h3>Yikes, there was an error.</h3>
-      </main>
-    ),
+    errorElement: <ErrorMsg />,
     children: [
       {
         index: true,
         element: <Home />,
-        loader: async () => {
-          const friends = await getMyFriends();
-          if (friends.length === 0) return redirect("/search");
-          return { friends };
+        loader: () => {
+          const { data } = getState()!;
+          if (data.connections.length === 0) {
+            return redirect("/search");
+          }
+          resetDocTitle();
+          const friends = getMyFriends();
+          return defer({ friends });
         },
       },
       {
         path: "p/:id",
-        element: <Profile />,
-        loader: async ({ params }) => {
+        loader: ({ params }) => {
           const { id } = params;
           if (!id) return redirect("/");
-          const profile = await getProfile(id);
-          if (!profile) {
-            throw new Error("No profile matches this username");
-          }
-          return profile;
+          const profile = getProfile(id);
+          return defer({ profile });
         },
-        errorElement: (
-          <main>
-            <h3>Sorry, no profile matches this username.</h3>
-          </main>
-        ),
+        element: <Profile />,
         children: [
           {
             index: true,
-            loader: () => {
-              // TODO: get last month
-              const lastMonth = "2024-06";
-              return redirect(`./${lastMonth}`);
+            loader: ({ params }) => {
+              const { id } = params;
+              if (!id) return redirect("/");
+              const { username, data } = getState()!;
+              if (id === username || data.connections.includes(id)) {
+                return redirect(`/p/${id}/${lastMonth}`);
+              }
+              let status = "open";
+              if (data.requested.includes(id)) {
+                status = "sent-req";
+              }
+              if (data.requests.includes(id)) {
+                status = "have-req";
+              }
+              if (data.ignored.includes(id)) {
+                status = "ignored";
+              }
+              return { id, status };
             },
-            element: (
-              <section>
-                <div className="spinner" />
-              </section>
-            ),
+            element: <Person />,
           },
           {
             path: ":month",
             loader: ({ params }) => {
               const { id, month } = params;
-              // TODO: verify month is OK
-              const moments = getMomentsForMonth(id!, month!);
+              if (!id) return redirect("/");
+              if (!month || !isValidMonth(month)) {
+                return redirect(`/p/${id}/${lastMonth}`);
+              }
+              const moments = getMomentsForMonth(id, month);
               return defer({ moments });
             },
             element: <Month />,
@@ -108,15 +104,17 @@ const router = createBrowserRouter([
       },
       {
         path: "add",
-        loader: async () => {
-          const moments = await getMyMomentsThisMonth();
-          return { moments };
+        loader: () => {
+          resetDocTitle();
+          const moments = getMyMomentsThisMonth();
+          return defer({ moments });
         },
         element: <Add />,
       },
       {
         path: "me",
         loader: () => {
+          resetDocTitle();
           const { username, name, data } = getState()!;
           const hasRequests = data.requests.length > 0;
           return { username, name, hasRequests };
@@ -136,6 +134,7 @@ const router = createBrowserRouter([
       {
         path: "requests",
         loader: () => {
+          setDocTitle("Friends Requests");
           const requests = getFriendRequests();
           return defer({ requests });
         },
@@ -144,13 +143,17 @@ const router = createBrowserRouter([
       {
         path: "edit-name",
         loader: () => {
+          setDocTitle("Edit Name");
           const { name } = getState()!;
           return { name };
         },
         action: async ({ request }) => {
           const formData = await request.formData();
-          const data = Object.fromEntries(formData);
-          console.log(data);
+          const newName = formData.get("name");
+          const { name } = getState()!;
+          if (newName && typeof newName === "string" && newName !== name) {
+            await updateName(newName);
+          }
           return redirect("/me");
         },
         element: <EditName />,
@@ -166,4 +169,6 @@ const router = createBrowserRouter([
   },
 ]);
 
-export default router;
+const AppRouter = () => <RouterProvider router={router} />;
+
+export default AppRouter;

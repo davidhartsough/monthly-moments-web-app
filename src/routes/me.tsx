@@ -16,20 +16,30 @@ export default function Me() {
         <ul>
           {hasRequests && (
             <li>
-              <Link to="/requests">Requests</Link>
+              <Link to="/requests" className="btn link-btn">
+                Friend Requests
+              </Link>
             </li>
           )}
           <li>
-            <Link to="/p/me">My Recaps</Link>
+            <Link to={`/p/${username}`} className="btn link-btn">
+              Your Recaps
+            </Link>
           </li>
           <li>
-            <Link to="/search">Find Friends</Link>
+            <Link to="/search" className="btn link-btn">
+              Find Friends
+            </Link>
           </li>
           <li>
-            <Link to="/edit-name">Edit Name</Link>
+            <Link to="/edit-name" className="btn link-btn">
+              Edit Name
+            </Link>
           </li>
           <li>
-            <Link to="/sign-out">Sign Out</Link>
+            <Link to="/sign-out" className="btn link-btn">
+              Sign Out
+            </Link>
           </li>
         </ul>
       </section>

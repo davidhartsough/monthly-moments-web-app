@@ -12,7 +12,8 @@ import {
   setDoc,
 } from "firebase/firestore";
 import { db } from "./fire";
-import { getFriends, getState } from "../auth/state";
+import { changeName, getFriends, getState, setFriends } from "../auth/state";
+import { thisMonth } from "../date-utils";
 
 const profilesCollection = collection(db, "profiles");
 
@@ -67,6 +68,7 @@ export async function getMyFriends(): Promise<BasicProfile[]> {
         : null
     )
     .filter((d): d is BasicProfile => !!d);
+  setFriends(friends);
   return friends;
 }
 
@@ -113,7 +115,7 @@ function getStatus(
 export async function getPeople(search: string): Promise<Peep[]> {
   const q = query(
     profilesCollection,
-    where("searchTerms", "array-contains", search),
+    where("searchTerms", "array-contains", search.toUpperCase()),
     limit(50)
   );
   const res = await getDocs(q);
@@ -210,5 +212,14 @@ export interface Profile {
 }
 
 export async function createNewProfile(p: Profile) {
-  await setDoc(doc(db, "profiles", p.username), p);
+  await setDoc(doc(db, "profiles", p.username), {
+    ...p,
+    firstMonth: thisMonth,
+  });
+}
+
+export async function updateName(name: string) {
+  const { username } = getState()!;
+  await updateDoc(doc(db, "profiles", username), { name });
+  changeName(name);
 }

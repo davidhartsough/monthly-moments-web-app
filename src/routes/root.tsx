@@ -1,34 +1,27 @@
-import { CirclePlus, CircleUserRound, House } from "lucide-react";
-import { NavLink, Navigate, Outlet, useNavigation } from "react-router-dom";
-import { useAuth } from "../auth/context";
+import { NavLink, Outlet, useNavigation } from "react-router-dom";
+import { CalendarPlus, CircleUserRound, House } from "lucide-react";
 
 export default function Root() {
   const { state } = useNavigation();
-  const { user, loading } = useAuth();
-  if (loading) {
-    return (
-      <main>
-        <div className="spinner" />
-      </main>
-    );
-  }
-  if (!user) {
-    return <Navigate to="/login" replace />;
-  }
   return (
     <>
       <nav>
-        <NavLink to="/">
-          <House size={48} />
-        </NavLink>
-        <NavLink to="/add">
-          <CirclePlus size={48} />
-        </NavLink>
-        <NavLink to="/me">
-          <CircleUserRound size={48} />
-        </NavLink>
+        <div className="nav-links">
+          <NavLink to="/">
+            <House size={48} />
+          </NavLink>
+          <NavLink to="/add">
+            <CalendarPlus size={48} />
+          </NavLink>
+          <NavLink to="/me">
+            <CircleUserRound size={48} />
+          </NavLink>
+        </div>
       </nav>
-      <div id="app" className={state === "loading" ? "loading" : ""}>
+      <div
+        id="app"
+        className={`contain${state === "loading" ? " loading" : ""}`}
+      >
         <Outlet />
       </div>
     </>
