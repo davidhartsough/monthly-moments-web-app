@@ -114,17 +114,15 @@ function MomentItem({ moment }: { moment: Moment }) {
 
 export default function Add() {
   const data = useLoaderData() as { moments: Moment[] };
-  const [newMoments, setNewMoments] = useState<Moment[]>([]);
   const [momentText, setMomentText] = useState("");
   const [isAdding, setIsAdding] = useState(false);
   const saveNewMoment = () => {
     setIsAdding(true);
     const text = momentText.trim();
     createMoment(text)
-      .then((id) => {
+      .then(() => {
         setMomentText("");
         setIsAdding(false);
-        setNewMoments((prev) => [...prev, { id, text }]);
       })
       .catch(console.warn);
   };
@@ -179,11 +177,6 @@ export default function Add() {
               }
             </Await>
           </Suspense>
-          {newMoments.map((m) => (
-            <li key={m.id}>
-              <MomentItem moment={m} />
-            </li>
-          ))}
         </ul>
       </section>
     </main>
