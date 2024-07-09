@@ -26,6 +26,7 @@ import { getMomentsForMonth, getMyMomentsThisMonth } from "../db/moments";
 import { getState } from "../auth/state";
 import { isValidMonth, lastMonth } from "../date-utils";
 import ErrorMsg from "../components/errormsg";
+import { clearStorage } from "../db/store";
 
 const baseTitle = "Monthly Moments";
 const setDocTitle = (title: string) => {
@@ -162,6 +163,7 @@ const router = createBrowserRouter([
         path: "sign-out",
         loader: async () => {
           await logout();
+          clearStorage();
           return redirect("/");
         },
       },

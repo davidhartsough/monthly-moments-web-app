@@ -20,6 +20,7 @@ import {
   setThisMonthsMoments,
 } from "../auth/state";
 import { thisMonth } from "../date-utils";
+import { getStoredMoments, storeMoments } from "./store";
 
 const momentsCollection = collection(db, "moments");
 
@@ -80,6 +81,8 @@ export async function getMyMomentsThisMonth(): Promise<BasicMoment[]> {
 }
 
 export async function getMomentsForMonth(id: string, month: string) {
+  const backup = getStoredMoments(id, month);
+  if (backup) return backup;
   const q = query(
     momentsCollection,
     where("username", "==", id),
@@ -98,5 +101,6 @@ export async function getMomentsForMonth(id: string, month: string) {
         : null
     )
     .filter((d): d is BasicMoment => !!d);
+  storeMoments(id, month, moments);
   return moments;
 }
