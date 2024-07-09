@@ -94,7 +94,7 @@ export default function Create({ authData, proceed }: Props) {
   const nameIsValid = isValidName(name);
   const usernameIsValid = isValidUsername(username);
   return (
-    <main>
+    <main className="contain">
       <header>
         <h1>Monthly Moments</h1>
         <h2>Create your profile</h2>
@@ -165,13 +165,13 @@ export default function Create({ authData, proceed }: Props) {
               <strong>NOTE:</strong> Once you choose a username, you cannot
               change it.
             </p>
-            <div className="center">
+            <div className="flex-center center">
               {loading ? (
-                <Spinner size={1.25} />
+                <Spinner size={2.25} mv />
               ) : (
                 <button
                   type="submit"
-                  className="btn"
+                  className="btn primary big-btn"
                   disabled={!nameIsValid || !usernameIsValid}
                 >
                   Create
