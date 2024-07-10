@@ -1,6 +1,6 @@
 import { ReactNode, useEffect, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
-import Login from "./login";
+import Landing from "./landing";
 import Create from "./create";
 import SplashSpinner from "../components/splashspinner";
 import { auth } from "../db/fire";
@@ -68,7 +68,7 @@ export default function Authenticator({ children }: { children: ReactNode }) {
   }, []);
   switch (step) {
     case 2:
-      return <Login />;
+      return <Landing />;
     case 3:
       return <Create authData={authData!} proceed={proceed} />;
     case 4:

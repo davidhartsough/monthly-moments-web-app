@@ -36,6 +36,8 @@
   --delete-bg: hsl(4deg 48% 16%);
   --delete-bg-hover: hsl(4deg 48% 20%);
   --delete-bg-focus: hsl(4deg 48% 14%);
+  --alert-bg: hsl(40deg 12% 12%);
+  --alert-border: hsl(40deg 40% 40%);
   --error: #ffa39e;
   --valid: #b7eb8f;
 }
@@ -75,6 +77,8 @@
     --delete-bg: hsl(4deg 48% 94%);
     --delete-bg-hover: hsl(4deg 48% 90%);
     --delete-bg-focus: hsl(4deg 48% 92%);
+    --alert-bg: hsl(52deg 50% 93%);
+    --alert-border: hsl(52deg 80% 45%);
     --error: #820014;
     --valid: #237804;
   }
@@ -722,6 +726,14 @@ article footer {
 
 p.helper {
   margin-bottom: 0.5rem;
+}
+
+.embedded-browser-alert {
+  border: 1px solid var(--alert-border);
+  padding: 1rem 1.125rem 1.125rem;
+  border-radius: 0.75rem;
+  margin: 0 0 2rem;
+  background-color: var(--alert-bg);
 }
 
 .flex {
