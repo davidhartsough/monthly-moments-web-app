@@ -19,7 +19,7 @@ import {
   removeMoment,
   setThisMonthsMoments,
 } from "../auth/state";
-import { thisMonth } from "../date-utils";
+import { lastMonth, thisMonth } from "../date-utils";
 import { getStoredMoments, storeMoments } from "./store";
 
 const momentsCollection = collection(db, "moments");
@@ -103,4 +103,25 @@ export async function getMomentsForMonth(id: string, month: string) {
     .filter((d): d is BasicMoment => !!d);
   storeMoments(id, month, moments);
   return moments;
+}
+
+export async function bulkSave(moments: string[]) {
+  const { uid, username } = getState()!;
+  try {
+    await Promise.all(
+      moments.map((text) =>
+        addDoc(momentsCollection, {
+          uid,
+          username,
+          month: lastMonth,
+          text,
+          timestamp: serverTimestamp(),
+        })
+      )
+    );
+    return true;
+  } catch (err) {
+    console.warn(err);
+    return false;
+  }
 }

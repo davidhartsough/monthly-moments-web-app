@@ -14,6 +14,7 @@ import Profile from "./profile";
 import Person from "./person";
 import Month from "./month";
 import EditName from "./editname";
+import SuperSecretSaver from "./super-secret-saver";
 import { logout } from "../db/auth";
 import {
   getFriendRequests,
@@ -22,7 +23,11 @@ import {
   getProfile,
   updateName,
 } from "../db/profiles";
-import { getMomentsForMonth, getMyMomentsThisMonth } from "../db/moments";
+import {
+  bulkSave,
+  getMomentsForMonth,
+  getMyMomentsThisMonth,
+} from "../db/moments";
 import { getState } from "../auth/state";
 import { isValidMonth, lastMonth } from "../date-utils";
 import ErrorMsg from "../components/errormsg";
@@ -166,6 +171,18 @@ const router = createBrowserRouter([
           clearStorage();
           return redirect("/");
         },
+      },
+      {
+        path: "super-secret-saver",
+        action: async ({ request }) => {
+          const formData = await request.formData();
+          const momentsText = formData.get("moments")?.toString().trim();
+          if (!momentsText) return redirect("/");
+          const moments = momentsText.split("\n\n").map((t) => t.trim());
+          await bulkSave(moments);
+          return redirect("/");
+        },
+        element: <SuperSecretSaver />,
       },
     ],
   },
