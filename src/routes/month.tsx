@@ -20,11 +20,13 @@ export default function Month() {
           {(moments: Moment[]) =>
             moments.length > 0 ? (
               <ul className="moments">
-                {moments.map(({ id, text }) => (
-                  <li key={id} className="moment">
-                    <MomentText text={text} />
-                  </li>
-                ))}
+                {moments
+                  .filter(({ text }) => text.trim())
+                  .map(({ id, text }) => (
+                    <li key={id} className="moment">
+                      <MomentText text={text.trim()} />
+                    </li>
+                  ))}
               </ul>
             ) : (
               <p className="center">No moments for this month</p>

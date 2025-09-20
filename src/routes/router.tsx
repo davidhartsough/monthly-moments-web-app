@@ -178,7 +178,10 @@ const router = createBrowserRouter([
           const formData = await request.formData();
           const momentsText = formData.get("moments")?.toString().trim();
           if (!momentsText) return redirect("/");
-          const moments = momentsText.split("\n\n").map((t) => t.trim());
+          const moments = momentsText
+            .split("\n\n")
+            .map((t) => t.trim())
+            .filter(Boolean);
           await bulkSave(moments);
           return redirect("/");
         },
